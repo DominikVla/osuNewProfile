@@ -4,8 +4,8 @@ import os
 from prettytable import PrettyTable
 
 # create a new client at https://osu.ppy.sh/home/account/edit#oauth
-client_id = None
-client_secret = 'Secret'
+client_id = 31835
+client_secret = 'fCYdo5ODaEpzclvcW2xgHGuceoemCSPvgVfsofKY'
 api = Ossapi(client_id, client_secret)
 
 # Save user scores to external file
