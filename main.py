@@ -2,6 +2,7 @@ from ossapi import Ossapi
 import json
 import os
 from prettytable import PrettyTable
+from time import sleep
 
 # create a new client at https://osu.ppy.sh/home/account/edit#oauth
 client_id = 31835
@@ -18,23 +19,24 @@ def save_scores(user_scores, get_id):
         # Convert accuracy to be more readable
         converted_accuracy = round(100 * score.accuracy, 2)
 
-
-        score_data = {
-            "Title": score.beatmapset.title,
-            "Mods": mods_used,
-            "PP": score.pp,
-            "Accuracy": converted_accuracy
-        }
-        json_object = json.dumps(score_data, indent=None, separators=(',', ':'))
-        with open ("scores.json", "a") as f:
-            f.write(json_object)
-            f.write('\n')
-            f.close()
-        user_id = str(get_id)
+        if score.pp !=None:
+            score_data = {
+                "Title": score.beatmapset.title,
+                "Mods": mods_used,
+                "PP": score.pp,
+                "Accuracy": converted_accuracy
+            }
+            json_object = json.dumps(score_data, indent=None, separators=(',', ':'))
+            with open ("scores.json", "a") as f:
+                f.write(json_object)
+                f.write('\n')
+                f.close()
+    user_id = str(get_id)
     with open ("userid.txt", "a") as f:
         f.write(user_id)
         f.close()
     print ("Your scores and ID have been saved!")
+    user_id = None
 
 # get user details (Name/ID, Gamemode)
 def get_user():
@@ -97,17 +99,20 @@ def delete_user():
             case _:
                 print("Invalid reply. Please reply with y or n to confirm your decision.")
 
-# Gets the Users latest scores
+# Gets the Users ID's and scores sets within the past 24hrs of signing up.
 def get_data():
     name = get_user()
     try:
         get_id = api.user(name).id
-        user_scores = api.user_scores(name, type="best", limit=20)
+        user_scores = api.user_scores(name, type="recent", limit=20)
+        if len(user_scores) == 0:
+            print ("No recent scores set! Exiting...")
+            sleep(2)
+            quit()
         save_scores(user_scores, get_id)
         main_menu()
     except Exception as e:
-        print("Sorry, something went wrong:", e)
-        main_menu()
+        print("Sorry, something went wrong... Make sure you have recent plays submitted!:", e)
 
 # Check if there's any data present
 def check_data():
