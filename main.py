@@ -19,22 +19,27 @@ def save_scores(user_scores, get_id):
         # Convert accuracy to be more readable
         converted_accuracy = round(100 * score.accuracy, 2)
 
+        # Saving scores with PP values
         if score.pp !=None:
             score_data = {
                 "Title": score.beatmapset.title,
                 "Mods": mods_used,
                 "PP": score.pp,
-                "Accuracy": converted_accuracy
+                "Accuracy": converted_accuracy,
+                "Score ID": score.id
             }
             json_object = json.dumps(score_data, indent=None, separators=(',', ':'))
-            with open ("scores.json", "a") as f:
+            with open ("scores.json", "a") as f: # Storing
                 f.write(json_object)
                 f.write('\n')
                 f.close()
+
+    # Saving user ID
     user_id = str(get_id)
     with open ("userid.txt", "a") as f:
         f.write(user_id)
         f.close()
+
     print ("Your scores and ID have been saved!")
     user_id = None
 
@@ -50,21 +55,28 @@ def get_user():
         name = saved_id
     return name
 
-# Displays content of JSON file
+# Displays content of JSON file in a table
 def show_scores():
-    table = PrettyTable(["Title", "Mods", "PP", "Accuracy"])
+    table = PrettyTable(["Title", "Mods", "PP", "Accuracy", "Score ID"])
 
     # Creating table
     scores = []
+    unique_scores = set()
+
     with open("scores.json", "r") as f:
         for line in f:
             data = json.loads(line)
-            scores.append(data)
+            # Checking for unique scores
+            score_key = (data["Title"], data["Mods"], data["PP"], data["Accuracy"], data["Score ID"])
+            if score_key not in unique_scores:
+                unique_scores.add(score_key)
+                scores.append(data)
+    fix_duplicates()
 
     # Table Sorting
     print ("How do you want to sort your scores? ('pp'/'accuracy').")
     lock = True
-    while lock ==True:
+    while lock:
         sort_key = input().lower()
         match sort_key:
             case "pp":
@@ -78,7 +90,7 @@ def show_scores():
 
     # Headings and printing
     for score in scores:
-        table.add_row([score["Title"], score["Mods"], score["PP"], score["Accuracy"]])
+        table.add_row([score["Title"], score["Mods"], score["PP"], score["Accuracy"], score["Score ID"]])
     print(table)
     main_menu()
 
@@ -106,8 +118,8 @@ def get_data():
         get_id = api.user(name).id
         user_scores = api.user_scores(name, type="recent", limit=20)
         if len(user_scores) == 0:
-            print ("No recent scores set! Exiting...")
-            sleep(2)
+            print ("Error! Make sure you have set scores in the past 24 hours! Exiting...")
+            sleep(5)
             quit()
         save_scores(user_scores, get_id)
         main_menu()
@@ -119,6 +131,25 @@ def check_data():
     file_check = check_file = os.path.isfile('./scores.json')
     if file_check != True:
         get_data()
+
+# Removes any duplicate scores stored in scores.json
+def fix_duplicates():
+    scores = []
+    unique_scores = set()
+    with open("scores.json", "r") as f:
+        for line in f:
+            data = json.loads(line)
+            # Checking for unique scores
+            score_key = (data["Title"], data["Mods"], data["PP"], data["Accuracy"])
+            if score_key not in unique_scores:
+                unique_scores.add(score_key)
+                scores.append(data)
+    f.close()
+    with open("scores.json", "w") as f:
+        for score in scores:
+            json.dump(score, f)
+            f.write('\n')
+    f.close()
 
 def help():
     print("""--------------------------------------------------------------------------------------
