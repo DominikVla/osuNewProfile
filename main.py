@@ -118,15 +118,21 @@ def get_data():
     name = get_user()
     try:
         get_id = api.user(name).id
+        if not get_id.isdigit():
+            print("Invalid osu! Account!")
+            sleep(3)
+            quit()
         user_scores = api.user_scores(name, type="recent", limit=20)
-        if len(user_scores) == 0:
+        if len(user_scores) == 0 or user_scores==None:
             print ("Error! Make sure you have set scores in the past 24 hours! Exiting...")
             sleep(5)
             quit()
         save_scores(user_scores, get_id)
         main_menu()
     except Exception as e:
-        print("Sorry, something went wrong... Make sure you have recent plays submitted!:", e)
+        print("Sorry, something went wrong...\nError:", e," \nExiting...")
+        sleep(5)
+        quit()
 
 # Check if there's any data present
 def check_data():
@@ -155,7 +161,7 @@ def fix_duplicates():
 
 def help():
     print("""--------------------------------------------------------------------------------------
-    Here's the list of commands you can use: 'show scores' 'delete data' 'quit' 'update'
+    Here's the list of commands you can use: 'show scores' 'delete data' 'update'
 --------------------------------------------------------------------------------------""")
     main_menu()
 
