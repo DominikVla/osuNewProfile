@@ -35,10 +35,12 @@ def save_scores(user_scores, get_id):
                 f.close()
 
     # Saving user ID
-    user_id = str(get_id)
-    with open ("userid.txt", "a") as f:
-        f.write(user_id)
-        f.close()
+    file_check = check_file = os.path.isfile('./userid.txt')
+    if file_check != True:
+        user_id = str(get_id)
+        with open ("userid.txt", "a") as f:
+            f.write(user_id)
+            f.close()
 
     print ("Your scores and ID have been saved!")
     user_id = None
@@ -169,8 +171,6 @@ def main_menu():
                 delete_user()
             case "help":
                 help()
-            case "quit":
-                quit()
             case "update":
                 get_data()
             case _ :
