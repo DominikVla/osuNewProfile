@@ -1,6 +1,8 @@
-<p align="center">
-  <img src="https://cdn.discordapp.com/attachments/925483640908025946/1237642451666075688/icon2.png?ex=663c63da&is=663b125a&hm=eeb05c893440e26d682ff4ede26ffe56ec804813f1f97e821dc881cd4cdd6521&">
-</p>
+<div align="center">
+  <img src="https://cdn.discordapp.com/attachments/925483640908025946/1237642451666075688/icon2.png?ex=66444cda&is=6642fb5a&hm=f05c6f035b87330e325556df1bf938ff125f5e2b19271669205acd695d4a30ff&" alt="image">
+</div>
+
+
 
 
 # osu!NewProfile
