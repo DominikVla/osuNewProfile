@@ -3,10 +3,11 @@ import json
 import os
 from prettytable import PrettyTable
 from time import sleep
+import math
 
 # create a new client at https://osu.ppy.sh/home/account/edit#oauth
-client_id = 31835
-client_secret = 'fCYdo5ODaEpzclvcW2xgHGuceoemCSPvgVfsofKY'
+client_id = 0
+client_secret = 'secret'
 api = Ossapi(client_id, client_secret)
 
 # Save user scores to external file
@@ -64,16 +65,21 @@ def show_scores():
     # Creating table
     scores = []
     unique_scores = set()
+    total_pp = 0
 
-    with open("scores.json", "r") as f:
-        for line in f:
-            data = json.loads(line)
-            # Checking for unique scores
-            score_key = (data["Title"], data["Mods"], data["PP"], data["Accuracy"], data["Score ID"])
-            if score_key not in unique_scores:
-                unique_scores.add(score_key)
-                scores.append(data)
-    fix_duplicates()
+    try:
+        with open("scores.json", "r") as f:
+            for line in f:
+                data = json.loads(line)
+                # Checking for unique scores
+                score_key = (data["Title"], data["Mods"], data["PP"], data["Accuracy"], data["Score ID"])
+                if score_key not in unique_scores:
+                    unique_scores.add(score_key)
+                    scores.append(data)
+        fix_duplicates()
+    except:
+        print ("No Scores Saved! Returning to menu")
+        main_menu()
 
     # Table Sorting
     print ("How do you want to sort your scores? ('pp'/'accuracy').")
@@ -93,7 +99,9 @@ def show_scores():
     # Headings and printing
     for score in scores:
         table.add_row([score["Title"], score["Mods"], score["PP"], score["Accuracy"], score["Score ID"]])
+        total_pp = total_pp + score["PP"]
     print(table)
+    print(f"Total PP: {total_pp:.2f} (Unweighted)")
     main_menu()
 
 # Deletes the JSON file
@@ -118,15 +126,12 @@ def get_data():
     name = get_user()
     try:
         get_id = api.user(name).id
-        if not get_id.isdigit():
+        if int(get_id) != get_id:
             print("Invalid osu! Account!")
             sleep(3)
             quit()
-        user_scores = api.user_scores(name, type="recent", limit=20)
-        if len(user_scores) == 0 or user_scores==None:
-            print ("Error! Make sure you have set scores in the past 24 hours! Exiting...")
-            sleep(5)
-            quit()
+        user_scores = api.user_scores(get_id, type="recent", limit=20)
+        print("No Scores detected! No scores have been saved. Use update in the main menu")
         save_scores(user_scores, get_id)
         main_menu()
     except Exception as e:
