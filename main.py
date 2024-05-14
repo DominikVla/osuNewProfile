@@ -66,6 +66,9 @@ def show_scores():
     scores = []
     unique_scores = set()
     total_pp = 0
+    weighted_pp = 0
+    weighting = 1
+    weighted_total = 0
 
     try:
         with open("scores.json", "r") as f:
@@ -99,9 +102,12 @@ def show_scores():
     # Headings and printing
     for score in scores:
         table.add_row([score["Title"], score["Mods"], score["PP"], score["Accuracy"], score["Score ID"]])
-        total_pp = total_pp + score["PP"]
+        total_pp += score["PP"]
+        weighted_pp = score["PP"] * weighting
+        weighted_total += weighted_pp
+        weighting = weighting * 0.95
     print(table)
-    print(f"Total PP: {total_pp:.2f} (Unweighted)")
+    print(f"Total PP: {total_pp:.2f}pp (Unweighted) | Weighted PP: {weighted_total:.2f}pp")
     main_menu()
 
 # Deletes the JSON file
@@ -111,8 +117,13 @@ def delete_user():
         confirmation = input().lower()
         match confirmation:
             case "y" | "yes":
-                os.remove("scores.json")
-                os.remove("userid.txt")
+                file_check = check_file = os.path.isfile('./scores.json')
+                if file_check == True:
+                    os.remove("scores.json")
+
+                file_check = check_file = os.path.isfile('./userid.txt')
+                if file_check ==True:
+                    os.remove("userid.txt")
                 print("User data successfully removed.")
                 get_data()
             case "n" | "no":
@@ -130,8 +141,17 @@ def get_data():
             print("Invalid osu! Account!")
             sleep(3)
             quit()
-        user_scores = api.user_scores(get_id, type="recent", limit=20)
-        print("No Scores detected! No scores have been saved. Use update in the main menu")
+        user_scores = api.user_scores(get_id, type="recent", limit=100)
+        if len(user_scores) == 0 or user_scores == None:
+            print("No Scores detected! No scores have been saved. Use update in the main menu")
+            file_check = check_file = os.path.isfile('./userid.txt')
+            if file_check != True:
+                user_id = str(get_id)
+                with open("userid.txt", "a") as f:
+                    f.write(user_id)
+                    f.close()
+            main_menu()
+
         save_scores(user_scores, get_id)
         main_menu()
     except Exception as e:
@@ -190,3 +210,11 @@ def main_menu():
 # running functions
 check_data()
 main_menu()
+
+# ISSUE:
+# Add weighted pp calc
+
+# PP weight system is:
+# full weight = 1.00
+# next weight system = 1.00 * 0.95
+# and then * 0.95 again.
