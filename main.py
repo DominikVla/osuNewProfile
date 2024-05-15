@@ -210,11 +210,3 @@ def main_menu():
 # running functions
 check_data()
 main_menu()
-
-# ISSUE:
-# Add weighted pp calc
-
-# PP weight system is:
-# full weight = 1.00
-# next weight system = 1.00 * 0.95
-# and then * 0.95 again.
