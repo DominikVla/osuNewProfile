@@ -3,10 +3,11 @@ import json
 import os
 from prettytable import PrettyTable
 from time import sleep
+import math
 
 # create a new client at https://osu.ppy.sh/home/account/edit#oauth
-client_id = 31835
-client_secret = 'fCYdo5ODaEpzclvcW2xgHGuceoemCSPvgVfsofKY'
+client_id = 0
+client_secret = 'secret'
 api = Ossapi(client_id, client_secret)
 
 # Save user scores to external file
@@ -35,10 +36,12 @@ def save_scores(user_scores, get_id):
                 f.close()
 
     # Saving user ID
-    user_id = str(get_id)
-    with open ("userid.txt", "a") as f:
-        f.write(user_id)
-        f.close()
+    file_check = check_file = os.path.isfile('./userid.txt')
+    if file_check != True:
+        user_id = str(get_id)
+        with open ("userid.txt", "a") as f:
+            f.write(user_id)
+            f.close()
 
     print ("Your scores and ID have been saved!")
     user_id = None
@@ -62,16 +65,24 @@ def show_scores():
     # Creating table
     scores = []
     unique_scores = set()
+    total_pp = 0
+    weighted_pp = 0
+    weighting = 1
+    weighted_total = 0
 
-    with open("scores.json", "r") as f:
-        for line in f:
-            data = json.loads(line)
-            # Checking for unique scores
-            score_key = (data["Title"], data["Mods"], data["PP"], data["Accuracy"], data["Score ID"])
-            if score_key not in unique_scores:
-                unique_scores.add(score_key)
-                scores.append(data)
-    fix_duplicates()
+    try:
+        with open("scores.json", "r") as f:
+            for line in f:
+                data = json.loads(line)
+                # Checking for unique scores
+                score_key = (data["Title"], data["Mods"], data["PP"], data["Accuracy"], data["Score ID"])
+                if score_key not in unique_scores:
+                    unique_scores.add(score_key)
+                    scores.append(data)
+        fix_duplicates()
+    except:
+        print ("No Scores Saved! Returning to menu")
+        main_menu()
 
     # Table Sorting
     print ("How do you want to sort your scores? ('pp'/'accuracy').")
@@ -91,7 +102,12 @@ def show_scores():
     # Headings and printing
     for score in scores:
         table.add_row([score["Title"], score["Mods"], score["PP"], score["Accuracy"], score["Score ID"]])
+        total_pp += score["PP"]
+        weighted_pp = score["PP"] * weighting
+        weighted_total += weighted_pp
+        weighting = weighting * 0.95
     print(table)
+    print(f"Total PP: {total_pp:.2f}pp (Unweighted) | Weighted PP: {weighted_total:.2f}pp")
     main_menu()
 
 # Deletes the JSON file
@@ -101,8 +117,13 @@ def delete_user():
         confirmation = input().lower()
         match confirmation:
             case "y" | "yes":
-                os.remove("scores.json")
-                os.remove("userid.txt")
+                file_check = check_file = os.path.isfile('./scores.json')
+                if file_check == True:
+                    os.remove("scores.json")
+
+                file_check = check_file = os.path.isfile('./userid.txt')
+                if file_check ==True:
+                    os.remove("userid.txt")
                 print("User data successfully removed.")
                 get_data()
             case "n" | "no":
@@ -116,15 +137,27 @@ def get_data():
     name = get_user()
     try:
         get_id = api.user(name).id
-        user_scores = api.user_scores(name, type="recent", limit=20)
-        if len(user_scores) == 0:
-            print ("Error! Make sure you have set scores in the past 24 hours! Exiting...")
-            sleep(5)
+        if int(get_id) != get_id:
+            print("Invalid osu! Account!")
+            sleep(3)
             quit()
+        user_scores = api.user_scores(get_id, type="recent", limit=100)
+        if len(user_scores) == 0 or user_scores == None:
+            print("No Scores detected! No scores have been saved. Use update in the main menu")
+            file_check = check_file = os.path.isfile('./userid.txt')
+            if file_check != True:
+                user_id = str(get_id)
+                with open("userid.txt", "a") as f:
+                    f.write(user_id)
+                    f.close()
+            main_menu()
+
         save_scores(user_scores, get_id)
         main_menu()
     except Exception as e:
-        print("Sorry, something went wrong... Make sure you have recent plays submitted!:", e)
+        print("Sorry, something went wrong...\nError:", e," \nExiting...")
+        sleep(5)
+        quit()
 
 # Check if there's any data present
 def check_data():
@@ -153,7 +186,7 @@ def fix_duplicates():
 
 def help():
     print("""--------------------------------------------------------------------------------------
-    Here's the list of commands you can use: 'show scores' 'delete data' 'quit' 'update'
+    Here's the list of commands you can use: 'show scores' 'delete data' 'update'
 --------------------------------------------------------------------------------------""")
     main_menu()
 
@@ -169,8 +202,6 @@ def main_menu():
                 delete_user()
             case "help":
                 help()
-            case "quit":
-                quit()
             case "update":
                 get_data()
             case _ :
